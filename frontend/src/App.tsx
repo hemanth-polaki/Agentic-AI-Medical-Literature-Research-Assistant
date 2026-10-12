@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_BASE_URL } from './config';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { QueryInputSection } from './components/QueryInputSection';
@@ -89,7 +90,7 @@ export function App() {
   const loadInitialData = async () => {
     try {
       // 1. Fetch sample queries
-      fetch('/api/benchmarks/sample')
+      fetch(`${API_BASE_URL}/api/benchmarks/sample`)
         .then(res => res.json())
         .then(data => {
           if (data.sample_queries && data.sample_queries.length > 0) {
@@ -99,7 +100,7 @@ export function App() {
         .catch(err => console.log('Sample benchmark fetch error:', err));
 
       // 2. Fetch review history
-      const res = await fetch('/api/reviews');
+      const res = await fetch(`${API_BASE_URL}/api/reviews`);
       if (res.ok) {
         const list: ReviewSummaryListItem[] = await res.json();
         setHistoryList(list);
@@ -119,7 +120,7 @@ export function App() {
 
   const loadReviewById = async (id: string) => {
     try {
-      const res = await fetch(`/api/review/${id}`);
+      const res = await fetch(`${API_BASE_URL}/api/review/${id}`);
       if (res.ok) {
         const data: LiteratureReviewResponse = await res.json();
         setReview(data);
@@ -159,7 +160,7 @@ export function App() {
     setIsQueryCollapsed(true);
 
     try {
-      const response = await fetch('/api/review/stream', {
+      const response = await fetch(`${API_BASE_URL}/api/review/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -210,7 +211,7 @@ export function App() {
       }
 
       // Refresh history list once completed
-      const historyRes = await fetch('/api/reviews');
+      const historyRes = await fetch(`${API_BASE_URL}/api/reviews`);
       if (historyRes.ok) {
         const list: ReviewSummaryListItem[] = await historyRes.json();
         setHistoryList(list);

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FC } from 'react';
+import { API_BASE_URL } from '../config';
 import { 
   FileUp, 
   X, 
@@ -50,7 +51,7 @@ export const PdfUploadModal: FC<PdfUploadModalProps> = ({
     }
 
     try {
-      const res = await fetch('/api/pdf/upload', {
+      const res = await fetch(`${API_BASE_URL}/api/pdf/upload`, {
         method: 'POST',
         body: formData
       });

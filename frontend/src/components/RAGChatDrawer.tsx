@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
+import { API_BASE_URL } from '../config';
 import { 
   MessageSquareQuote, 
   Send, 
@@ -71,7 +72,9 @@ export const RAGChatDrawer: FC<RAGChatDrawerProps> = ({
 
   const fetchCorpusScope = async () => {
     try {
-      const url = reviewId ? `/api/rag/corpus?review_id=${encodeURIComponent(reviewId)}` : '/api/rag/corpus';
+      const url = reviewId 
+        ? `${API_BASE_URL}/api/rag/corpus?review_id=${encodeURIComponent(reviewId)}` 
+        : `${API_BASE_URL}/api/rag/corpus`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
@@ -133,7 +136,7 @@ export const RAGChatDrawer: FC<RAGChatDrawerProps> = ({
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/rag/chat', {
+      const res = await fetch(`${API_BASE_URL}/api/rag/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
