@@ -1,7 +1,12 @@
 import json
 from typing import Dict, Any, Optional, List
 import os
-import redis.asyncio as aioredis
+
+try:
+    import redis.asyncio as aioredis
+except ImportError:
+    aioredis = None
+
 from app.config import settings
 
 class AgentMemory:
@@ -11,11 +16,13 @@ class AgentMemory:
     """
     def __init__(self):
         self.redis_url = settings.REDIS_URL or "redis://localhost:6379/0"
-        self._redis_client: Optional[aioredis.Redis] = None
+        self._redis_client: Optional[Any] = None
         self._in_memory_store: Dict[str, Dict[str, Any]] = {}
         self._connected: bool = False
 
-    async def get_client(self) -> Optional[aioredis.Redis]:
+    async def get_client(self) -> Optional[Any]:
+        if aioredis is None:
+            return None
         if self._redis_client is None:
             try:
                 self._redis_client = aioredis.from_url(

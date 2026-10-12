@@ -24,11 +24,20 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS setup
+# CORS setup: Parse configured origins and dynamically allow Vercel previews & production
+raw_origins = settings.CORS_ORIGINS
+if isinstance(raw_origins, str):
+    cors_origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+else:
+    cors_origins = list(raw_origins)
+
+allow_all_origins = "*" in cors_origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=["*"] if allow_all_origins else cors_origins,
+    allow_origin_regex=r"^https:\/\/.*\.vercel\.app$",
+    allow_credentials=not allow_all_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -41,6 +50,21 @@ async def startup_event():
     import asyncio
     from app.rag.embeddings import embedding_model
     asyncio.create_task(asyncio.to_thread(embedding_model._load_model))
+
+@app.get("/")
+async def root():
+    """Root entrypoint for Render service ping and health discovery."""
+    return {
+        "status": "online",
+        "service": settings.PROJECT_NAME,
+        "docs_url": "/docs",
+        "health_url": "/api/health"
+    }
+
+@app.get("/healthz")
+async def healthz():
+    """Simple liveness check for Render load balancer."""
+    return {"status": "ok"}
 
 @app.get("/api/health")
 async def health_check():

@@ -1,7 +1,36 @@
-import faiss
 import numpy as np
 import re
 from typing import List, Dict, Any, Optional, Tuple
+
+try:
+    import faiss
+except ImportError:
+    # Pure-NumPy Inner Product (cosine) vector index fallback if FAISS is not installed
+    class NumpyIndexFlatIP:
+        def __init__(self, dimension: int):
+            self.dimension = dimension
+            self.vectors = np.empty((0, dimension), dtype=np.float32)
+            self.ntotal = 0
+
+        def add(self, x: np.ndarray):
+            if x.ndim == 1:
+                x = np.expand_dims(x, 0)
+            self.vectors = np.vstack([self.vectors, x]) if self.ntotal > 0 else x.astype(np.float32)
+            self.ntotal = len(self.vectors)
+
+        def search(self, q: np.ndarray, k: int):
+            if self.ntotal == 0:
+                return np.zeros((1, 0)), np.zeros((1, 0), dtype=int)
+            sims = np.dot(q, self.vectors.T)[0]
+            top_k_indices = np.argsort(sims)[::-1][:k]
+            top_k_scores = sims[top_k_indices]
+            return np.expand_dims(top_k_scores, 0), np.expand_dims(top_k_indices, 0)
+
+    class DummyFaiss:
+        IndexFlatIP = NumpyIndexFlatIP
+
+    faiss = DummyFaiss()
+
 from app.models.schemas import Paper
 from app.rag.embeddings import embedding_model
 

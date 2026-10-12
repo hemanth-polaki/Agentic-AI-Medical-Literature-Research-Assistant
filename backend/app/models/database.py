@@ -16,10 +16,13 @@ class ReviewRecord(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     data_json = Column(Text, nullable=False)  # stores full LiteratureReviewResponse payload
 
+import re
+
 def get_postgres_url(raw_url: str) -> str:
     """
     Normalizes PostgreSQL connection URL for SQLAlchemy asyncpg driver.
     Strictly enforces PostgreSQL and rejects SQLite.
+    Normalizes sslmode parameters (e.g. from Render, Supabase, Neon) for asyncpg.
     """
     url = (raw_url or "").strip()
     if url.startswith("sqlite"):
@@ -33,6 +36,13 @@ def get_postgres_url(raw_url: str) -> str:
         url = url.replace("postgres://", "postgresql+asyncpg://", 1)
     elif url.startswith("postgresql://") and not url.startswith("postgresql+asyncpg://"):
         url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+    # Normalize sslmode for asyncpg (e.g. Supabase, Neon, Render external connections)
+    if "sslmode=" in url:
+        url = re.sub(r'sslmode=require', 'ssl=require', url)
+        url = re.sub(r'[?&]sslmode=disable', '', url)
+        url = re.sub(r'sslmode=[^&]+', 'ssl=require', url)
+
     return url
 
 DATABASE_URL = get_postgres_url(settings.DATABASE_URL)
@@ -40,8 +50,9 @@ DATABASE_URL = get_postgres_url(settings.DATABASE_URL)
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,
-    pool_size=10,
-    max_overflow=20,
+    pool_size=5,
+    max_overflow=10,
+    pool_recycle=1800,
     pool_pre_ping=True
 )
 

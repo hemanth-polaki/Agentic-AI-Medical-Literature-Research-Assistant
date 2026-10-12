@@ -1,14 +1,23 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv
-from pydantic import field_validator
-from pydantic_settings import BaseSettings
-from typing import List, Union
+from typing import List, Union, Any
 
-env_path = Path(__file__).resolve().parent.parent / ".env"
-if env_path.exists():
-    load_dotenv(dotenv_path=env_path, override=True)
-load_dotenv(override=True)
+try:
+    from dotenv import load_dotenv
+    env_path = Path(__file__).resolve().parent.parent / ".env"
+    if env_path.exists():
+        load_dotenv(dotenv_path=env_path, override=True)
+    load_dotenv(override=True)
+except ImportError:
+    pass
+
+try:
+    from pydantic_settings import BaseSettings
+except ImportError:
+    try:
+        from pydantic import BaseSettings  # type: ignore
+    except ImportError:
+        from pydantic import BaseModel as BaseSettings  # type: ignore
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "BrightLit AI Agentic Medical Literature Research Assistant"

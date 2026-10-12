@@ -114,3 +114,14 @@ Frontend runs at: `http://localhost:5173`
 - `POST /api/rag/chat` — FAISS grounded Q&A over retrieved corpus
 - `POST /api/pdf/upload` — Scientific PDF manuscript extraction
 - `GET /api/benchmarks/sample` — Pre-configured clinical research benchmarks
+
+---
+
+## Cloud Deployment
+
+BrightLit AI is pre-configured for zero-friction cloud deployment:
+- **Backend on Render**: Uses [render.yaml](file:///render.yaml) for 1-click Blueprint deployment with FastAPI and managed PostgreSQL.
+- **Frontend on Vercel**: Uses [vercel.json](file:///vercel.json) with Vite build optimizations and SPA routing.
+
+For complete step-by-step instructions and environment variable references, see the **[Cloud Deployment Guide](file:///DEPLOYMENT.md)**.
+

@@ -1,12 +1,20 @@
 import io
 import re
 from typing import Optional, Dict, Any, List, Tuple
-import PyPDF2
+
+try:
+    import PyPDF2
+except ImportError:
+    PyPDF2 = None
+
 from app.models.schemas import Paper
 
 class PDFProcessor:
     def extract_text_from_pdf(self, file_bytes: bytes) -> str:
         """Extract text from PDF file bytes with page-boundary tracking and encoding cleanup"""
+        if PyPDF2 is None:
+            print("[PDFProcessor] PyPDF2 is not installed.")
+            return ""
         try:
             reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
             text_pages = []
