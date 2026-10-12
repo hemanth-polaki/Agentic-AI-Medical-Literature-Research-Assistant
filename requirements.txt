@@ -15,17 +15,18 @@ requests>=2.31.0
 sse-starlette>=2.1.0
 
 # Database & Memory (PostgreSQL / Redis)
-SQLAlchemy>=2.0.0
+SQLAlchemy[asyncio]>=2.0.0
+greenlet>=3.0.0
 asyncpg>=0.29.0
 redis>=5.0.0
 
-# Vector RAG & Embeddings
-faiss-cpu>=1.8.0
+# Vector RAG & Numerical Computing
 numpy>=1.24.0
+faiss-cpu>=1.8.0
 sentence-transformers>=3.0.0
 torch>=2.2.0
 
-# Scientific PDF Processing
+# Scientific PDF Processing & Multipart Uploads
 PyPDF2>=3.0.0
 python-multipart>=0.0.9
 

@@ -1,6 +1,15 @@
 import json
 from datetime import datetime
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+try:
+    from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+    has_async_engine = True
+except (ImportError, ModuleNotFoundError) as err:
+    create_async_engine = None
+    AsyncSession = None
+    async_sessionmaker = None
+    has_async_engine = False
+    print(f"[Database] Notice: SQLAlchemy asyncio/greenlet not available ({err}). Active fallback to in-memory store.")
+
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import Column, String, Text, DateTime
 from app.config import settings
@@ -47,21 +56,32 @@ def get_postgres_url(raw_url: str) -> str:
 
 DATABASE_URL = get_postgres_url(settings.DATABASE_URL)
 
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=False,
-    pool_size=5,
-    max_overflow=10,
-    pool_recycle=1800,
-    pool_pre_ping=True
-)
+class _DummyAsyncSessionContext:
+    async def __aenter__(self):
+        raise RuntimeError("Database engine not initialized; falling back to in-memory store.")
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        pass
 
-AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autoflush=False
-)
+if has_async_engine and create_async_engine:
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=False,
+        pool_size=5,
+        max_overflow=10,
+        pool_recycle=1800,
+        pool_pre_ping=True
+    )
+
+    AsyncSessionLocal = async_sessionmaker(
+        bind=engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autoflush=False
+    )
+else:
+    engine = None
+    def AsyncSessionLocal():
+        return _DummyAsyncSessionContext()
 
 async def init_db():
     """Initializes PostgreSQL tables for literature reviews."""
