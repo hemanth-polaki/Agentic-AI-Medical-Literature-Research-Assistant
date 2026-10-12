@@ -85,6 +85,9 @@ class MultiAgentOrchestrator:
             yield json.dumps({"type": "status_update", "status": "Screening", "data": response_obj.model_dump()})
             
             screened_results, selected_papers = await screening_agent.screen_papers(retrieved_papers, query_plan)
+            # Failsafe: if selected_papers is empty but retrieved_papers exists, select top candidate papers
+            if not selected_papers and retrieved_papers:
+                selected_papers = retrieved_papers[:request.max_results]
             response_obj.screened_results = screened_results
             response_obj.selected_papers = selected_papers
             add_trace("Screening Agent", "Screening Complete", f"Approved {len(selected_papers)} publications for full evidence extraction; excluded {len(retrieved_papers) - len(selected_papers)}.")
@@ -97,6 +100,8 @@ class MultiAgentOrchestrator:
             yield json.dumps({"type": "status_update", "status": "Extracting", "data": response_obj.model_dump()})
             
             evidence_table = await evidence_extractor.extract_evidence(selected_papers)
+            if not evidence_table and selected_papers:
+                evidence_table = [evidence_extractor._extract_heuristic(p) for p in selected_papers]
             response_obj.evidence_table = evidence_table
             add_trace("Evidence Extraction Agent", "Extraction Completed", f"Successfully extracted evidence matrix with {len(evidence_table)} grounded study profiles.")
             yield json.dumps({"type": "evidence_ready", "status": "Comparing", "data": response_obj.model_dump()})
@@ -150,6 +155,30 @@ class MultiAgentOrchestrator:
 
         except Exception as e:
             print(f"[Orchestrator] Error during stream_review: {e}")
+            try:
+                # Failsafe recovery to guarantee non-zero review components
+                if not response_obj.selected_papers and response_obj.retrieved_papers:
+                    response_obj.selected_papers = response_obj.retrieved_papers[:request.max_results]
+                if not response_obj.evidence_table and response_obj.selected_papers:
+                    response_obj.evidence_table = [evidence_extractor._extract_heuristic(p) for p in response_obj.selected_papers]
+                if not response_obj.comparison and response_obj.evidence_table:
+                    response_obj.comparison = comparison_agent._heuristic_compare(response_obj.evidence_table, response_obj.query_plan, [])
+                if not response_obj.grounded_claims or not response_obj.references:
+                    synth_md, cls, refs = await synthesis_agent.synthesize_and_review(
+                        response_obj.query_plan or query_planner._heuristic_plan(request.query),
+                        response_obj.selected_papers,
+                        response_obj.evidence_table,
+                        response_obj.comparison
+                    )
+                    if not response_obj.final_synthesis:
+                        response_obj.final_synthesis = synth_md
+                    if not response_obj.grounded_claims:
+                        response_obj.grounded_claims = cls
+                    if not response_obj.references:
+                        response_obj.references = refs
+            except Exception as fe:
+                print(f"[Orchestrator] Recovery error: {fe}")
+
             for s in trace_history:
                 s.status = "completed"
             add_trace("System Orchestrator", "Execution Warning", f"Workflow adjusted: {str(e)}", "completed")

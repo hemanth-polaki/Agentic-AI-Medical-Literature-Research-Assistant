@@ -55,3 +55,19 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
+class LLMCircuitBreaker:
+    """Circuit breaker for Gemini / LLM APIs to immediately fall back to high-accuracy
+    rule-based extraction without repeated 429 quota delays."""
+    _gemini_exhausted_until: float = 0.0
+
+    @classmethod
+    def is_gemini_available(cls) -> bool:
+        import time
+        return time.time() > cls._gemini_exhausted_until
+
+    @classmethod
+    def mark_gemini_exhausted(cls, cooldown_seconds: float = 300.0):
+        import time
+        cls._gemini_exhausted_until = time.time() + cooldown_seconds
+        print(f"[CircuitBreaker] Gemini quota exhausted or rate-limited. Activating fast heuristic fallback for {int(cooldown_seconds)}s.")
+

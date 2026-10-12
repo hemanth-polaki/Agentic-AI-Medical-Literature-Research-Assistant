@@ -8,7 +8,7 @@ from app.models.schemas import (
     MetricBenchmarkItem,
     QueryPlan
 )
-from app.config import settings
+from app.config import settings, LLMCircuitBreaker
 import asyncio
 import json
 import re
@@ -35,8 +35,8 @@ class ComparisonAgent:
                 auc=str(m_dict.get("auc") or "N/A")
             ))
 
-        # Attempt LLM-driven comparative analysis if API key is present
-        if settings.GEMINI_API_KEY and plan and evidence_list:
+        # Attempt LLM-driven comparative analysis if API key is present and circuit breaker allows
+        if settings.GEMINI_API_KEY and LLMCircuitBreaker.is_gemini_available() and plan and evidence_list:
             llm_comparison = await self._compare_gemini(evidence_list, plan, metrics_benchmark)
             if llm_comparison:
                 return llm_comparison
@@ -133,7 +133,11 @@ Output valid JSON matching this schema:
                         data["metrics_benchmark"] = metrics_benchmark
                         return ComparisonAnalysis(**data)
                 except Exception as e:
-                    print(f"[ComparisonAgent] Gemini ({model_name}) error: {e}")
+                    err_str = str(e)
+                    print(f"[ComparisonAgent] Gemini ({model_name}) error: {err_str[:120]}")
+                    if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str or "quota" in err_str.lower():
+                        LLMCircuitBreaker.mark_gemini_exhausted()
+                        break
                     continue
         except Exception as e:
             print(f"[ComparisonAgent] LLM comparison error: {e}")
