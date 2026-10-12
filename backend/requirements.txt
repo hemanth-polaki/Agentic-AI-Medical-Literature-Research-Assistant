@@ -1,0 +1,28 @@
+# Core Backend Framework
+fastapi>=0.115.0
+uvicorn>=0.30.0
+pydantic>=2.8.0
+
+# Async HTTP & Streaming
+httpx>=0.27.0
+aiohttp>=3.9.0
+sse-starlette>=2.1.0
+
+# Database & Memory (PostgreSQL / Redis)
+SQLAlchemy>=2.0.0
+asyncpg>=0.29.0
+redis>=5.0.0
+
+# Vector RAG & Embeddings
+faiss-cpu>=1.8.0
+sentence-transformers>=3.0.0
+torch>=2.2.0
+
+# Scientific PDF Processing
+PyPDF2>=3.0.0
+python-multipart>=0.0.9
+
+# LLM APIs (OpenAI / Gemini / Claude)
+openai>=1.40.0
+google-genai>=1.0.0
+anthropic>=0.34.0
