@@ -21,6 +21,7 @@ interface SidebarProps {
   activeTab: SidebarNavTab;
   onSelectTab: (tab: SidebarNavTab) => void;
   onNewReview?: () => void;
+  onGoLanding?: () => void;
   papersCount?: number;
   evidenceCount?: number;
   referencesCount?: number;
@@ -37,6 +38,7 @@ export const Sidebar: FC<SidebarProps> = ({
   activeTab,
   onSelectTab,
   onNewReview,
+  onGoLanding,
   papersCount = 0,
   evidenceCount = 0,
   referencesCount = 0,
@@ -90,24 +92,28 @@ export const Sidebar: FC<SidebarProps> = ({
           isOpenMobile ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        {/* Top Header & Navigation scroll container */}
-        <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-6">
+        {/* 1. FIXED TOP: Brand Logo & New Literature Review Action */}
+        <div className="shrink-0 p-3.5 pb-3 border-b border-slate-100 bg-white space-y-3 z-10">
           
-          {/* Brand Header */}
-          <div className="flex items-center justify-between px-1.5 pb-2 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-teal-600 flex items-center justify-center text-white shadow-sm shadow-teal-600/30 ring-2 ring-teal-500/20">
-                <Sparkles className="w-5 h-5 text-white" />
+          {/* Brand Header & Home Link */}
+          <div className="flex items-center justify-between px-1">
+            <button
+              onClick={onGoLanding ? () => handleSystemAction(onGoLanding) : undefined}
+              className="flex items-center gap-2.5 text-left group hover:opacity-95 transition-opacity"
+              title="Return to BrightLit AI Landing Page"
+            >
+              <div className="w-8 h-8 rounded-xl bg-teal-600 flex items-center justify-center text-white shadow-xs shadow-teal-600/30 ring-2 ring-teal-500/20 group-hover:scale-105 transition-transform">
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-sm font-extrabold text-slate-900 tracking-tight leading-none">
+                <h1 className="text-sm font-extrabold text-slate-900 tracking-tight leading-none group-hover:text-teal-700 transition-colors">
                   BrightLit AI
                 </h1>
-                <p className="text-[11px] text-slate-600 font-medium truncate mt-1">
-                  Medical literature review
+                <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5">
+                  Medical Research System
                 </p>
               </div>
-            </div>
+            </button>
 
             {/* Mobile close button */}
             {onCloseMobile && (
@@ -121,19 +127,23 @@ export const Sidebar: FC<SidebarProps> = ({
             )}
           </div>
 
-          {/* New Review Primary Action */}
+          {/* Fixed New Literature Review Primary Action Button */}
           {onNewReview && (
             <button
               onClick={() => handleSystemAction(onNewReview)}
               disabled={isRunning}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-bold text-xs shadow-sm shadow-teal-700/20 active:scale-98 transition-all disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-bold text-xs shadow-xs shadow-teal-700/20 active:scale-98 transition-all disabled:opacity-50"
               title="Start a new systematic literature review"
             >
               <Plus className="w-4 h-4" />
               <span>New Literature Review</span>
             </button>
           )}
+        </div>
 
+        {/* 2. SCROLLABLE MIDDLE: Review Navigation & System Action Buttons */}
+        <div className="flex-1 overflow-y-auto px-3.5 py-3.5 space-y-5">
+          
           {/* Section: REVIEW */}
           <div className="space-y-1">
             <div className="px-2.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">

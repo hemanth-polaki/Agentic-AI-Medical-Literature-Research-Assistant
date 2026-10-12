@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { API_BASE_URL } from './config';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
+import { LandingPage } from './components/LandingPage';
 import { QueryInputSection } from './components/QueryInputSection';
 import { AgentStepper } from './components/AgentStepper';
 import { MetricsOverview } from './components/MetricsOverview';
@@ -35,17 +36,17 @@ import type {
 } from './types';
 
 export function App() {
+  const [currentView, setCurrentView] = useState<'landing' | 'workspace'>('landing');
   const [activeTab, setActiveTab] = useState<SidebarNavTab>('overview');
   const [isSidebarMobileOpen, setIsSidebarMobileOpen] = useState(false);
   
   // Workstation mode in Overview (Dual Split Workstation is the primary mode)
   const [overviewMode, setOverviewMode] = useState<'summary' | 'split'>('split');
   const [sidePaneView, setSidePaneView] = useState<'comparison' | 'evidence' | 'gaps' | 'trace'>('comparison');
-  const [isQueryCollapsed, setIsQueryCollapsed] = useState(true);
+  const [isQueryCollapsed, setIsQueryCollapsed] = useState(false);
 
-  const [query, setQuery] = useState(
-    "Review recent research on deep-learning methods for EEG seizure detection and compare datasets, models, validation methods, and evaluation metrics."
-  );
+  // Default query starts completely empty when page is redirected / refreshed
+  const [query, setQuery] = useState('');
   const [maxResults, setMaxResults] = useState(7);
   const [isRunning, setIsRunning] = useState(false);
   const [statusText, setStatusText] = useState('Idle');
@@ -53,36 +54,14 @@ export function App() {
   const [review, setReview] = useState<LiteratureReviewResponse | null>(null);
   const [traceSteps, setTraceSteps] = useState<AgentTraceStep[]>([]);
   const [historyList, setHistoryList] = useState<ReviewSummaryListItem[]>([]);
-  const [sampleQueries, setSampleQueries] = useState<SampleBenchmarkQuery[]>([
-    {
-      id: "eeg-seizure-dl",
-      title: "EEG Seizure Detection Benchmark",
-      query: "Review recent research on deep-learning methods for EEG seizure detection and compare datasets, models, validation methods, and evaluation metrics.",
-      domain: "Neurology & Deep Learning",
-      recommended: true
-    },
-    {
-      id: "cardiac-arrhythmia-ecg",
-      title: "12-Lead ECG Arrhythmia Classification",
-      query: "Synthesize recent advances in 12-lead ECG arrhythmia detection using convolutional transformers, evaluating MIT-BIH and PTB-XL datasets.",
-      domain: "Cardiology & AI",
-      recommended: false
-    },
-    {
-      id: "cxr-pneumonia-multimodal",
-      title: "Chest X-Ray Vision-Language Models",
-      query: "Review multimodal vision-language models for chest radiograph pulmonary opacity detection, comparing CheXpert and MIMIC-CXR benchmarks.",
-      domain: "Radiology & Multimodal AI",
-      recommended: false
-    }
-  ]);
+  const [sampleQueries, setSampleQueries] = useState<SampleBenchmarkQuery[]>([]);
 
   // Modals / Drawers
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isRAGOpen, setIsRAGOpen] = useState(false);
 
-  // Initial load: Fetch past reviews and sample benchmarks
+  // Initial load: Fetch past reviews and sample benchmarks without auto-populating query
   useEffect(() => {
     loadInitialData();
   }, []);
@@ -104,17 +83,9 @@ export function App() {
       if (res.ok) {
         const list: ReviewSummaryListItem[] = await res.json();
         setHistoryList(list);
-
-        // If past reviews exist, load the latest one automatically
-        if (list.length > 0) {
-          loadReviewById(list[0].id);
-        } else {
-          setIsQueryCollapsed(false);
-        }
       }
     } catch (e) {
       console.log('Error initializing data:', e);
-      setIsQueryCollapsed(false);
     }
   };
 
@@ -247,6 +218,25 @@ export function App() {
   const evidenceCount = review?.evidence_table?.length || 0;
   const referencesCount = review?.references?.length || 0;
 
+  // Render Landing Page as default entry view
+  if (currentView === 'landing') {
+    return (
+      <LandingPage
+        onLaunchWorkspace={(initialQuery?: string) => {
+          if (initialQuery) {
+            setQuery(initialQuery);
+            setIsQueryCollapsed(false);
+            setCurrentView('workspace');
+          } else {
+            setQuery('');
+            setIsQueryCollapsed(false);
+            setCurrentView('workspace');
+          }
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex font-sans selection:bg-teal-500/20 selection:text-teal-900 relative">
       {/* Background ambient clinical grid pattern */}
@@ -257,6 +247,7 @@ export function App() {
         activeTab={activeTab}
         onSelectTab={(tab) => setActiveTab(tab)}
         onNewReview={handleNewReview}
+        onGoLanding={() => setCurrentView('landing')}
         papersCount={papersCount}
         evidenceCount={evidenceCount}
         referencesCount={referencesCount}
@@ -280,6 +271,7 @@ export function App() {
           onToggleSidebarMobile={() => setIsSidebarMobileOpen(!isSidebarMobileOpen)}
           activeQueryTitle={review?.query || query}
           onNewReview={handleNewReview}
+          onGoLanding={() => setCurrentView('landing')}
         />
 
         {/* Content Container */}

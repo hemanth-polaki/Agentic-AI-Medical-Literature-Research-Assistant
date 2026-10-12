@@ -16,6 +16,7 @@ interface HeaderProps {
   onToggleSidebarMobile?: () => void;
   activeQueryTitle?: string;
   onNewReview?: () => void;
+  onGoLanding?: () => void;
 }
 
 export const Header: FC<HeaderProps> = ({
@@ -24,7 +25,8 @@ export const Header: FC<HeaderProps> = ({
   statusText,
   onToggleSidebarMobile,
   activeQueryTitle,
-  onNewReview
+  onNewReview,
+  onGoLanding
 }) => {
   const getTabLabel = (tab: SidebarNavTab) => {
     switch (tab) {
@@ -60,9 +62,19 @@ export const Header: FC<HeaderProps> = ({
 
             {/* Breadcrumb Navigation */}
             <div className="flex items-center gap-2 min-w-0 text-xs">
-              <span className="font-bold text-slate-800 tracking-tight shrink-0 hidden sm:inline">
-                BrightLit AI
-              </span>
+              {onGoLanding ? (
+                <button
+                  onClick={onGoLanding}
+                  className="font-bold text-slate-800 hover:text-teal-700 tracking-tight shrink-0 hidden sm:inline transition-colors"
+                  title="Return to Landing Page"
+                >
+                  BrightLit AI
+                </button>
+              ) : (
+                <span className="font-bold text-slate-800 tracking-tight shrink-0 hidden sm:inline">
+                  BrightLit AI
+                </span>
+              )}
               <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 hidden sm:inline" />
               <span className="font-bold text-teal-900 bg-teal-50 border border-teal-200/80 px-2.5 py-1 rounded-md tracking-tight truncate shadow-2xs">
                 {getTabLabel(activeTab)}

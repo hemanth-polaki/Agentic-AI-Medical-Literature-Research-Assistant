@@ -5,7 +5,6 @@ import {
   Sparkles, 
   SlidersHorizontal, 
   Loader2, 
-  BookOpen, 
   CheckCircle2, 
   ArrowRight, 
   Zap, 
@@ -24,7 +23,7 @@ interface QueryInputSectionProps {
   setMaxResults: (n: number) => void;
   isRunning: boolean;
   onStartReview: () => void;
-  sampleQueries: SampleBenchmarkQuery[];
+  sampleQueries?: SampleBenchmarkQuery[];
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   hasActiveReview?: boolean;
@@ -38,7 +37,7 @@ export const QueryInputSection: FC<QueryInputSectionProps> = ({
   setMaxResults,
   isRunning,
   onStartReview,
-  sampleQueries,
+  sampleQueries: _sampleQueries,
   isCollapsed = false,
   onToggleCollapse,
   hasActiveReview = false,
@@ -237,34 +236,6 @@ export const QueryInputSection: FC<QueryInputSectionProps> = ({
           </div>
         )}
 
-        {/* Curated Benchmark Queries */}
-        <div className="pt-1">
-          <div className="flex items-center gap-2 mb-2">
-            <BookOpen className="w-3.5 h-3.5 text-slate-500" />
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Curated Clinical Benchmark Scenarios:
-            </span>
-          </div>
-          
-          <div className="flex flex-wrap gap-2">
-            {sampleQueries.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setQuery(item.query)}
-                disabled={isRunning}
-                className="group flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-teal-50/70 border border-slate-200 hover:border-teal-300 text-xs text-left transition-all shadow-2xs"
-              >
-                <span className={`w-1.5 h-1.5 rounded-full ${item.recommended ? 'bg-teal-600 ring-2 ring-teal-500/20' : 'bg-slate-400'}`}></span>
-                <span className="text-slate-700 group-hover:text-teal-900 font-semibold">
-                  {item.title}
-                </span>
-                <span className="text-[10px] text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
-                  {item.domain}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
 
       </div>
     </section>
